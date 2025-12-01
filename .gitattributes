@@ -1,0 +1,34 @@
+# Go module files — always use LF
+*.mod text eol=lf
+*.sum text eol=lf
+
+# Go source code — treat as text, normalize line endings to LF
+*.go text eol=lf
+
+# Shell scripts (common in CI or dev tooling) — must use LF
+*.sh text eol=lf
+
+# YAML / JSON / TOML config files — use LF for consistency
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+
+# Markdown documentation
+*.md text eol=lf
+
+# Ensure binary files are not modified
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar.gz binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+
+# End of file
