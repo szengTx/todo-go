@@ -1,44 +1,40 @@
-{{ define "content" }}
-<h2>我的任务</h2>
+{{define "title"}}我的任务 - 任务管理系统{{end}}
+
+{{define "content"}}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>我的任务</h2>
+    <a href="/logout" class="btn btn-outline-secondary">退出登录</a>
+</div>
 
 <!-- 添加任务表单 -->
 <form method="POST" action="/tasks/create" class="mb-4">
-  <div class="input-group">
-    <input type="text" name="title" class="form-control" placeholder="输入新任务..." required>
-    <button class="btn btn-success" type="submit">添加</button>
-  </div>
+    <div class="input-group">
+        <input type="text" class="form-control" name="title" placeholder="输入新任务..." required>
+        <button class="btn btn-primary" type="submit">添加</button>
+    </div>
 </form>
 
 <!-- 任务列表 -->
+{{if .Tasks}}
 <ul class="list-group">
-{{ range .Tasks }}
-  <li class="list-group-item d-flex justify-content-between align-items-center">
-    <span {{ if .Completed }}style="text-decoration: line-through; color: #6c757d;"{{ end }}>
-      {{ .Title }}
-    </span>
-    <div>
-      <!-- 切换完成状态（用简单 JS 实现无刷新） -->
-      <button class="btn btn-sm {{ if .Completed }}btn-secondary{{ else }}btn-outline-success{{ end }}"
-              onclick="toggleTask('{{ .ID }}')">
-        {{ if .Completed }}已完成{{ else }}标记完成{{ end }}
-      </button>
-      <a href="/tasks/delete/{{ .ID }}" class="btn btn-sm btn-outline-danger ms-2"
-         onclick="return confirm('确定删除？')">删除</a>
-    </div>
-  </li>
-{{ else }}
-  <li class="list-group-item text-muted">暂无任务</li>
-{{ end }}
+    {{range .Tasks}}
+    <li class="list-group-item d-flex justify-content-between align-items-center task-item {{if .Completed}}completed{{end}}">
+        <span>{{.Title}}</span>
+        <div>
+            <form method="POST" action="/tasks/toggle/{{.ID}}" style="display:inline;">
+                <button type="submit" class="btn btn-sm {{if .Completed}}btn-outline-success{{else}}btn-outline-warning{{end}}">
+                    {{if .Completed}}已完成{{else}}标记完成{{end}}
+                </button>
+            </form>
+            <a href="/tasks/delete/{{.ID}}" class="btn btn-sm btn-outline-danger ms-2" 
+               onclick="return confirm('确定删除这个任务吗？')">删除</a>
+        </div>
+    </li>
+    {{end}}
 </ul>
+{{else}}
+<div class="alert alert-info">暂无任务，快去添加一个吧！</div>
+{{end}}
+{{end}}
 
-<script>
-function toggleTask(id) {
-  fetch('/tasks/toggle/' + id, {
-    method: 'POST',
-    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-  })
-  .then(res => res.json())
-  .then(data => location.reload()); // 简单起见，直接刷新；也可局部更新 DOM
-}
-</script>
-{{ end }}
+{{template "base" .}}
