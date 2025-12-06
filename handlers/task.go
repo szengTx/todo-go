@@ -35,12 +35,20 @@ func CreateTask(c *gin.Context) {
 
 	title := c.PostForm("title")
 	if title == "" {
-		c.HTML(http.StatusOK, "tasks.html", gin.H{"error": "任务标题不能为空"})
+		// 如果标题为空，重新查询当前用户的任务并在页面中显示错误
+		var tasks []models.Task
+		database.DB.Where("user_id = ?", userID).Find(&tasks)
+		c.HTML(http.StatusOK, "tasks.html", gin.H{"error": "任务标题不能为空", "Tasks": tasks})
 		return
 	}
 
 	task := models.Task{Title: title, UserID: uint(userID)}
-	database.DB.Create(&task)
+	if err := database.DB.Create(&task).Error; err != nil {
+		var tasks []models.Task
+		database.DB.Where("user_id = ?", userID).Find(&tasks)
+		c.HTML(http.StatusOK, "tasks.html", gin.H{"error": "无法创建任务", "Tasks": tasks})
+		return
+	}
 	c.Redirect(http.StatusFound, "/tasks")
 }
 

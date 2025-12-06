@@ -6,6 +6,7 @@ import (
 
 	"todo-go/database"
 	"todo-go/handlers"
+	"todo-go/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,8 +18,14 @@ func main() {
 	tmpl := template.Must(template.ParseGlob("templates/*.html"))
 	r.SetHTMLTemplate(tmpl)
 
-	// 首页重定向到登录
+	// 根路由：如果没有任何用户，提示先注册，否则去登录
 	r.GET("/", func(c *gin.Context) {
+		var u models.User
+		if database.DB.First(&u).Error != nil {
+			// 数据库中没有用户，去注册
+			c.Redirect(http.StatusFound, "/register")
+			return
+		}
 		c.Redirect(http.StatusFound, "/login")
 	})
 
