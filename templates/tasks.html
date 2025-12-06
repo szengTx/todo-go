@@ -1,20 +1,17 @@
 {{define "title"}}我的任务 - 任务管理系统{{end}}
-
 {{define "content"}}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>我的任务</h2>
     <a href="/logout" class="btn btn-outline-secondary">退出登录</a>
 </div>
 
-<!-- 添加任务表单 -->
 <form method="POST" action="/tasks/create" class="mb-4">
     <div class="input-group">
-        <input type="text" class="form-control" name="title" placeholder="输入新任务..." required>
-        <button class="btn btn-primary" type="submit">添加</button>
+        <input type="text" name="title" class="form-control" placeholder="输入新任务..." required>
+        <button class="btn btn-primary">添加</button>
     </div>
 </form>
 
-<!-- 任务列表 -->
 {{if .Tasks}}
 <ul class="list-group">
     {{range .Tasks}}
@@ -26,15 +23,13 @@
                     {{if .Completed}}已完成{{else}}标记完成{{end}}
                 </button>
             </form>
-            <a href="/tasks/delete/{{.ID}}" class="btn btn-sm btn-outline-danger ms-2" 
-               onclick="return confirm('确定删除这个任务吗？')">删除</a>
+            <a href="/tasks/delete/{{.ID}}" class="btn btn-sm btn-outline-danger ms-2" onclick="return confirm('确定删除？')">删除</a>
         </div>
     </li>
     {{end}}
 </ul>
 {{else}}
-<div class="alert alert-info">暂无任务，快去添加一个吧！</div>
+<div class="alert alert-info">暂无任务</div>
 {{end}}
 {{end}}
-
 {{template "base" .}}

@@ -14,25 +14,30 @@ func main() {
 	database.InitDB()
 
 	r := gin.Default()
-	r.SetHTMLTemplate(template.Must(template.ParseGlob("templates/*.html")))
+	tmpl := template.Must(template.ParseGlob("templates/*.html"))
+	r.SetHTMLTemplate(tmpl)
 
-	// 路由
+	// 首页重定向到登录
+	r.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusFound, "/login")
+	})
+
+	// 公开路由
 	r.GET("/register", handlers.Register)
 	r.POST("/register", handlers.Register)
 	r.GET("/login", handlers.Login)
 	r.POST("/login", handlers.Login)
-	r.GET("/tasks", handlers.TasksPage)
-	r.POST("/tasks/create", handlers.CreateTask)
-	r.POST("/tasks/toggle/:id", handlers.ToggleTask)
-	r.GET("/tasks/delete/:id", handlers.DeleteTask)
+	r.GET("/logout", handlers.Logout)
 
-	r.GET("/", func(c *gin.Context) {
-		if _, err := c.Cookie("user_id"); err == nil {
-			c.Redirect(http.StatusFound, "/tasks")
-		} else {
-			c.Redirect(http.StatusFound, "/login")
-		}
-	})
+	// 受保护路由
+	auth := r.Group("/")
+	auth.Use(handlers.AuthMiddleware())
+	{
+		auth.GET("/tasks", handlers.TasksPage)
+		auth.POST("/tasks/create", handlers.CreateTask)
+		auth.POST("/tasks/toggle/:id", handlers.ToggleTask)
+		auth.GET("/tasks/delete/:id", handlers.DeleteTask)
+	}
 
 	r.Run(":8080")
 }

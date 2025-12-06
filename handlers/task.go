@@ -10,24 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func getCurrentUserID(c *gin.Context) (uint, bool) {
-	cookie, err := c.Cookie("user_id")
-	if err != nil {
-		return 0, false
-	}
-	id, err := strconv.ParseUint(cookie, 10, 32)
-	if err != nil {
-		return 0, false
-	}
-	return uint(id), true
-}
-
 func TasksPage(c *gin.Context) {
-	userID, ok := getCurrentUserID(c)
-	if !ok {
-		c.Redirect(http.StatusFound, "/login")
-		return
-	}
+	cookie, _ := c.Cookie("user_id")
+	userID, _ := strconv.Atoi(cookie)
 
 	var tasks []models.Task
 	database.DB.Where("user_id = ?", userID).Find(&tasks)
@@ -36,55 +21,47 @@ func TasksPage(c *gin.Context) {
 }
 
 func CreateTask(c *gin.Context) {
-	userID, ok := getCurrentUserID(c)
-	if !ok {
-		c.AbortWithStatus(http.StatusUnauthorized)
+	cookie, err := c.Cookie("user_id")
+	if err != nil {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+
+	userID, err := strconv.Atoi(cookie)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/login")
 		return
 	}
 
 	title := c.PostForm("title")
 	if title == "" {
-		c.Redirect(http.StatusFound, "/tasks")
+		c.HTML(http.StatusOK, "tasks.html", gin.H{"error": "任务标题不能为空"})
 		return
 	}
 
-	task := models.Task{Title: title, UserID: userID}
+	task := models.Task{Title: title, UserID: uint(userID)}
 	database.DB.Create(&task)
 	c.Redirect(http.StatusFound, "/tasks")
 }
 
 func ToggleTask(c *gin.Context) {
-	userID, ok := getCurrentUserID(c)
-	if !ok {
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
+	id := c.Param("id")
+	cookie, _ := c.Cookie("user_id")
+	userID, _ := strconv.Atoi(cookie)
 
-	taskID := c.Param("id")
 	var task models.Task
-	if database.DB.Where("id = ? AND user_id = ?", taskID, userID).First(&task).Error != nil {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
+	if database.DB.Where("id = ? AND user_id = ?", id, userID).First(&task).Error == nil {
+		task.Completed = !task.Completed
+		database.DB.Save(&task)
 	}
-
-	task.Completed = !task.Completed
-	database.DB.Save(&task)
-
-	if c.GetHeader("X-Requested-With") == "XMLHttpRequest" {
-		c.JSON(http.StatusOK, gin.H{"completed": task.Completed})
-	} else {
-		c.Redirect(http.StatusFound, "/tasks")
-	}
+	c.Redirect(http.StatusFound, "/tasks")
 }
 
 func DeleteTask(c *gin.Context) {
-	userID, ok := getCurrentUserID(c)
-	if !ok {
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
+	id := c.Param("id")
+	cookie, _ := c.Cookie("user_id")
+	userID, _ := strconv.Atoi(cookie)
 
-	taskID := c.Param("id")
-	database.DB.Where("id = ? AND user_id = ?", taskID, userID).Delete(&models.Task{})
+	database.DB.Where("id = ? AND user_id = ?", id, userID).Delete(&models.Task{})
 	c.Redirect(http.StatusFound, "/tasks")
 }

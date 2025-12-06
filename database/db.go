@@ -1,7 +1,8 @@
+// database/db.go
 package database
 
 import (
-	"todo-go/models" // 注意：这里用你的模块名作为前缀
+	"todo-go/models"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -11,11 +12,9 @@ var DB *gorm.DB
 
 func InitDB() {
 	var err error
-	DB, err = gorm.Open(sqlite.Open("todo.db"), &gorm.Config{})
+	DB, err = gorm.Open(sqlite.Open("file:todo.db?cache=shared&_fk=1"), &gorm.Config{})
 	if err != nil {
-		panic("failed to connect database")
+		panic("failed to connect database: " + err.Error())
 	}
-
-	// 自动迁移
 	DB.AutoMigrate(&models.User{}, &models.Task{})
 }
