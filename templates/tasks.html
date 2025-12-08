@@ -1,35 +1,66 @@
 {{define "title"}}我的任务 - 任务管理系统{{end}}
 {{define "content"}}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>我的任务</h2>
-    <a href="/logout" class="btn btn-outline-secondary">退出登录</a>
+<style>
+    .btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-block;
+        margin: 0 4px;
+    }
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+    .btn-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+</style>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1>我的任务</h1>
+    <a href="/logout" class="btn btn-outline">退出登录</a>
 </div>
 
-<form method="POST" action="/tasks/create" class="mb-4">
-    <div class="input-group">
-        <input type="text" name="title" class="form-control" placeholder="输入新任务..." required>
-        <button class="btn btn-primary">添加</button>
-    </div>
+<form method="POST" action="/tasks/create" style="display: flex; gap: 8px; margin-bottom: 24px;">
+    <input type="text" name="title" placeholder="输入新任务..." required
+           style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px;">
+    <button type="submit" class="btn btn-success">添加</button>
 </form>
 
 {{if .Tasks}}
-<ul class="list-group">
     {{range .Tasks}}
-    <li class="list-group-item d-flex justify-content-between align-items-center task-item {{if .Completed}}completed{{end}}">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee;">
+        {{if .Completed}}
+        <span style="text-decoration: line-through; color: #888;">{{.Title}}</span>
+        {{else}}
         <span>{{.Title}}</span>
+        {{end}}
         <div>
-            <form method="POST" action="/tasks/toggle/{{.ID}}" style="display:inline;">
-                <button type="submit" class="btn btn-sm {{if .Completed}}btn-outline-success{{else}}btn-outline-warning{{end}}">
-                    {{if .Completed}}已完成{{else}}标记完成{{end}}
+            <form method="POST" action="/tasks/toggle/{{.ID}}" style="display: inline;">
+                <button type="submit" class="{{if .Completed}}btn btn-warning{{else}}btn btn-success{{end}}">
+                    {{if .Completed}}取消完成{{else}}标记完成{{end}}
                 </button>
             </form>
-            <a href="/tasks/delete/{{.ID}}" class="btn btn-sm btn-outline-danger ms-2" onclick="return confirm('确定删除？')">删除</a>
+            <a href="/tasks/delete/{{.ID}}"
+               onclick="return confirm('确定删除此任务？');"
+               class="btn btn-danger">
+                删除
+            </a>
         </div>
-    </li>
+    </div>
     {{end}}
-</ul>
 {{else}}
-<div class="alert alert-info">暂无任务</div>
+    <p>暂无任务。</p>
 {{end}}
 {{end}}
-{{template "base" .}}
+
+{{define "tasks.html"}}{{template "base" .}}{{end}}

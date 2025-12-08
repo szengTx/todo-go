@@ -31,7 +31,10 @@ func Register(c *gin.Context) {
 		user := models.User{Username: username, Password: string(hashed)}
 		database.DB.Create(&user)
 
-		c.Redirect(http.StatusFound, "/login")
+		// 注册后自动登录：设置 user_id cookie 并跳转到任务页
+		userIDStr := strconv.Itoa(int(user.ID))
+		c.SetCookie("user_id", userIDStr, 3600, "/", "", false, true)
+		c.Redirect(http.StatusFound, "/tasks")
 		return
 	}
 	c.HTML(http.StatusOK, "register.html", nil)

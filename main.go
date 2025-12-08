@@ -17,7 +17,10 @@ func main() {
 	r := gin.Default()
 	tmpl := template.Must(template.ParseGlob("templates/*.html"))
 	r.SetHTMLTemplate(tmpl)
-
+	r.Use(func(c *gin.Context) {
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Next()
+	})
 	// 根路由：如果没有任何用户，提示先注册，否则去登录
 	r.GET("/", func(c *gin.Context) {
 		var u models.User

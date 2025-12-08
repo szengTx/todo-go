@@ -52,6 +52,7 @@ func CreateTask(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/tasks")
 }
 
+// ToggleTask 切换任务的完成状态
 func ToggleTask(c *gin.Context) {
 	id := c.Param("id")
 	cookie, _ := c.Cookie("user_id")
