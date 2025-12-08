@@ -1,66 +1,91 @@
 {{define "title"}}我的任务 - 任务管理系统{{end}}
 {{define "content"}}
-<style>
-    .btn {
-        padding: 6px 12px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        text-decoration: none;
-        display: inline-block;
-        margin: 0 4px;
-    }
-    .btn-success {
-        background: #28a745;
-        color: white;
-    }
-    .btn-warning {
-        background: #ffc107;
-        color: #212529;
-    }
-    .btn-danger {
-        background: #dc3545;
-        color: white;
-    }
-</style>
+<h2>我的任务</h2>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-    <h1>我的任务</h1>
-    <a href="/logout" class="btn btn-outline">退出登录</a>
+<div class="view-switcher">
+    <button id="list-view-btn" class="active">列表视图</button>
+    <button id="calendar-view-btn">日历视图</button>
 </div>
 
-<form method="POST" action="/tasks/create" style="display: flex; gap: 8px; margin-bottom: 24px;">
-    <input type="text" name="title" placeholder="输入新任务..." required
-           style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px;">
-    <button type="submit" class="btn btn-success">添加</button>
-</form>
 
-{{if .Tasks}}
-    {{range .Tasks}}
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee;">
-        {{if .Completed}}
-        <span style="text-decoration: line-through; color: #888;">{{.Title}}</span>
-        {{else}}
-        <span>{{.Title}}</span>
-        {{end}}
-        <div>
-            <form method="POST" action="/tasks/toggle/{{.ID}}" style="display: inline;">
-                <button type="submit" class="{{if .Completed}}btn btn-warning{{else}}btn btn-success{{end}}">
-                    {{if .Completed}}取消完成{{else}}标记完成{{end}}
-                </button>
-            </form>
-            <a href="/tasks/delete/{{.ID}}"
-               onclick="return confirm('确定删除此任务？');"
-               class="btn btn-danger">
-                删除
-            </a>
-        </div>
-    </div>
+<div id="task-list">
+    {{if .error}}
+    <p style="color: red;">{{.error}}</p>
     {{end}}
-{{else}}
-    <p>暂无任务。</p>
-{{end}}
+
+    <form action="/tasks/create" method="post">
+        <input type="text" name="title" placeholder="输入新任务..." required>
+        <input type="date" name="deadline">
+        <button type="submit">添加任务</button>
+    </form>
+
+    <ul>
+        {{range .Tasks}}
+        <li>
+            <form action="/tasks/toggle/{{.ID}}" method="post" style="display: inline;">
+                <input type="checkbox" {{if .Completed}}checked{{end}} onchange="this.form.submit()">
+            </form>
+            <span class="task-title {{if .Completed}}completed{{end}}">
+                {{.Title}}
+            </span>
+            {{if .Deadline}}
+            <span class="deadline">
+                (截止日期: {{.Deadline.Format "2006-01-02"}})
+            </span>
+            {{end}}
+            <a href="/tasks/delete/{{.ID}}">删除</a>
+        </li>
+        {{end}}
+    </ul>
+</div>
+
+<div id="calendar-view" style="display: none;">
+    <div id="calendar"></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const listViewBtn = document.getElementById('list-view-btn');
+        const calendarViewBtn = document.getElementById('calendar-view-btn');
+        const taskListDiv = document.getElementById('task-list');
+        const calendarViewDiv = document.getElementById('calendar-view');
+        const calendarEl = document.getElementById('calendar');
+
+        let calendar;
+
+        function showListView() {
+            taskListDiv.style.display = 'block';
+            calendarViewDiv.style.display = 'none';
+            listViewBtn.classList.add('active');
+            calendarViewBtn.classList.remove('active');
+        }
+
+        function showCalendarView() {
+            taskListDiv.style.display = 'none';
+            calendarViewDiv.style.display = 'block';
+            listViewBtn.classList.remove('active');
+            calendarViewBtn.classList.add('active');
+
+            if (!calendar) {
+                calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,listWeek'
+                    },
+                    events: '/tasks/json',
+                    locale: 'zh-cn'
+                });
+                calendar.render();
+            }
+        }
+
+        listViewBtn.addEventListener('click', showListView);
+        calendarViewBtn.addEventListener('click', showCalendarView);
+    });
+</script>
+
 {{end}}
 
 {{define "tasks.html"}}{{template "base" .}}{{end}}

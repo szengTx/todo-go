@@ -4,12 +4,20 @@ import (
 	"html/template"
 	"net/http"
 	"strconv"
+	"time"
 
 	"todo-go/database"
 	"todo-go/models"
 
 	"github.com/gin-gonic/gin"
 )
+
+// CalendarEvent 用于为 FullCalendar 格式化任务数据
+type CalendarEvent struct {
+	Title  string `json:"title"`
+	Start  string `json:"start"`
+	AllDay bool   `json:"allDay"`
+}
 
 func TasksPage(c *gin.Context) {
 	tmpl, err := template.ParseFiles("templates/tasks.html", "templates/base.html")
@@ -25,6 +33,27 @@ func TasksPage(c *gin.Context) {
 
 	c.Writer.WriteHeader(http.StatusOK)
 	tmpl.ExecuteTemplate(c.Writer, "base", gin.H{"Tasks": tasks})
+}
+
+func GetTasksJSON(c *gin.Context) {
+	cookie, _ := c.Cookie("user_id")
+	userID, _ := strconv.Atoi(cookie)
+
+	var tasks []models.Task
+	database.DB.Where("user_id = ?", userID).Find(&tasks)
+
+	events := make([]CalendarEvent, 0)
+	for _, task := range tasks {
+		if task.Deadline != nil {
+			events = append(events, CalendarEvent{
+				Title:  task.Title,
+				Start:  task.Deadline.Format("2006-01-02"),
+				AllDay: true,
+			})
+		}
+	}
+
+	c.JSON(http.StatusOK, events)
 }
 
 func CreateTask(c *gin.Context) {
@@ -46,6 +75,8 @@ func CreateTask(c *gin.Context) {
 	}
 
 	title := c.PostForm("title")
+	deadlineStr := c.PostForm("deadline")
+
 	if title == "" {
 		// 如果标题为空，重新查询当前用户的任务并在页面中显示错误
 		var tasks []models.Task
@@ -55,7 +86,15 @@ func CreateTask(c *gin.Context) {
 		return
 	}
 
-	task := models.Task{Title: title, UserID: uint(userID)}
+	var deadline *time.Time
+	if deadlineStr != "" {
+		parsedTime, err := time.Parse("2006-01-02", deadlineStr)
+		if err == nil {
+			deadline = &parsedTime
+		}
+	}
+
+	task := models.Task{Title: title, UserID: uint(userID), Deadline: deadline}
 	if err := database.DB.Create(&task).Error; err != nil {
 		var tasks []models.Task
 		database.DB.Where("user_id = ?", userID).Find(&tasks)

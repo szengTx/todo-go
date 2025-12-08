@@ -14,6 +14,7 @@ func main() {
 	database.InitDB()
 
 	r := gin.Default()
+	r.Static("/static", "./static")
 	r.Use(func(c *gin.Context) {
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Next()
@@ -41,6 +42,7 @@ func main() {
 	auth.Use(handlers.AuthMiddleware())
 	{
 		auth.GET("/", handlers.TasksPage)
+		auth.GET("/json", handlers.GetTasksJSON)
 		auth.POST("/create", handlers.CreateTask)
 		auth.POST("/toggle/:id", handlers.ToggleTask)
 		auth.GET("/delete/:id", handlers.DeleteTask)

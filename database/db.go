@@ -16,5 +16,6 @@ func InitDB() {
 	if err != nil {
 		panic("failed to connect database: " + err.Error())
 	}
+	// 自动迁移
 	DB.AutoMigrate(&models.User{}, &models.Task{})
 }
