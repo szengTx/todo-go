@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"html/template"
 	"net/http"
 	"strconv"
 
@@ -12,18 +13,26 @@ import (
 )
 
 func Register(c *gin.Context) {
+	tmpl, err := template.ParseFiles("templates/register.html", "templates/base.html")
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Error parsing templates: %v", err)
+		return
+	}
+
 	if c.Request.Method == "POST" {
 		username := c.PostForm("username")
 		password := c.PostForm("password")
 
 		if username == "" || password == "" {
-			c.HTML(http.StatusOK, "register.html", gin.H{"error": "用户名和密码不能为空"})
+			c.Writer.WriteHeader(http.StatusOK)
+			tmpl.ExecuteTemplate(c.Writer, "base", gin.H{"error": "用户名和密码不能为空"})
 			return
 		}
 
 		var existingUser models.User
 		if database.DB.Where("username = ?", username).First(&existingUser).Error == nil {
-			c.HTML(http.StatusOK, "register.html", gin.H{"error": "用户名已存在"})
+			c.Writer.WriteHeader(http.StatusOK)
+			tmpl.ExecuteTemplate(c.Writer, "base", gin.H{"error": "用户名已存在"})
 			return
 		}
 
@@ -37,22 +46,30 @@ func Register(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/tasks")
 		return
 	}
-	c.HTML(http.StatusOK, "register.html", nil)
+	c.Writer.WriteHeader(http.StatusOK)
+	tmpl.ExecuteTemplate(c.Writer, "base", nil)
 }
 
 func Login(c *gin.Context) {
+	tmpl, err := template.ParseFiles("templates/login.html", "templates/base.html")
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Error parsing templates: %v", err)
+		return
+	}
 	if c.Request.Method == "POST" {
 		username := c.PostForm("username")
 		password := c.PostForm("password")
 
 		var user models.User
 		if database.DB.Where("username = ?", username).First(&user).Error != nil {
-			c.HTML(http.StatusOK, "login.html", gin.H{"error": "用户名或密码错误"})
+			c.Writer.WriteHeader(http.StatusOK)
+			tmpl.ExecuteTemplate(c.Writer, "base", gin.H{"error": "用户名或密码错误"})
 			return
 		}
 
 		if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
-			c.HTML(http.StatusOK, "login.html", gin.H{"error": "用户名或密码错误"})
+			c.Writer.WriteHeader(http.StatusOK)
+			tmpl.ExecuteTemplate(c.Writer, "base", gin.H{"error": "用户名或密码错误"})
 			return
 		}
 
@@ -61,7 +78,8 @@ func Login(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/tasks")
 		return
 	}
-	c.HTML(http.StatusOK, "login.html", nil)
+	c.Writer.WriteHeader(http.StatusOK)
+	tmpl.ExecuteTemplate(c.Writer, "base", nil)
 }
 
 func Logout(c *gin.Context) {
