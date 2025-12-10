@@ -25,15 +25,15 @@
             <form action="/tasks/toggle/{{.ID}}" method="post" style="display: inline;">
                 <input type="checkbox" {{if .Completed}}checked{{end}} onchange="this.form.submit()">
             </form>
-            <span class="task-title {{if .Completed}}completed{{end}}">
-                {{.Title}}
-            </span>
-            {{if .Deadline}}
-            <span class="deadline">
-                (截止日期: {{.Deadline.Format "2006-01-02"}})
-            </span>
-            {{end}}
-            <a href="/tasks/delete/{{.ID}}">删除</a>
+            <div>
+                <span class="task-title {{if .Completed}}completed{{end}}">{{.Title}}</span>
+                {{if .Deadline}}
+                <div class="pill">截止: {{.Deadline.Format "2006-01-02"}}</div>
+                {{end}}
+            </div>
+            <div class="actions">
+                <a href="/tasks/delete/{{.ID}}">删除</a>
+            </div>
         </li>
         {{end}}
     </ul>
