@@ -10,11 +10,12 @@
 </head>
 <body>
     <div class="page-shell">
-        <header class="topbar">
+        <header class="topbar fade-in">
             <div class="brand"><a href="/">任务管理系统</a></div>
             <nav class="nav-links">
                 {{ if .IsLoggedIn }}
-                    <a href="/tasks">我的任务</a>
+                    <a href="/tasks">任务</a>
+                    <a href="/profile">个人主页</a>
                     <a href="/logout">登出</a>
                 {{ else }}
                     <a href="/login">登录</a>
@@ -24,12 +25,21 @@
         </header>
 
         <main class="layout">
-            <div class="card">
+            <div class="card fade-in">
                 {{ template "content" . }}
             </div>
         </main>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script>
+        // 页面进入时的淡入动画
+        window.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.fade-in').forEach((el, idx) => {
+                el.style.transitionDelay = `${idx * 60}ms`;
+                requestAnimationFrame(() => el.classList.add('enter'));
+            });
+        });
+    </script>
 </body>
 </html>
 {{end}}

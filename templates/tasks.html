@@ -13,9 +13,13 @@
     <p style="color: red;">{{.error}}</p>
     {{end}}
 
-    <form action="/tasks/create" method="post">
+    <form action="/tasks/create" method="post" id="task-form">
         <input type="text" name="title" placeholder="输入新任务..." required>
-        <input type="date" name="deadline">
+        <div class="form-inline">
+            <label class="inline"><input type="checkbox" name="all_day" id="all-day" checked> 全天</label>
+            <input type="date" name="deadline_date" placeholder="选择日期">
+            <input type="time" name="deadline_time" id="deadline-time" placeholder="截止时间" style="display:none;">
+        </div>
         <button type="submit">添加任务</button>
     </form>
 
@@ -28,7 +32,7 @@
             <div>
                 <span class="task-title {{if .Completed}}completed{{end}}">{{.Title}}</span>
                 {{if .Deadline}}
-                <div class="pill">截止: {{.Deadline.Format "2006-01-02"}}</div>
+                <div class="pill">截止: {{if .AllDay}}{{.Deadline.Format "2006-01-02"}}{{else}}{{.Deadline.Format "2006-01-02 15:04"}}{{end}}</div>
                 {{end}}
             </div>
             <div class="actions">
@@ -50,6 +54,8 @@
         const taskListDiv = document.getElementById('task-list');
         const calendarViewDiv = document.getElementById('calendar-view');
         const calendarEl = document.getElementById('calendar');
+        const allDayCheckbox = document.getElementById('all-day');
+        const deadlineTimeInput = document.getElementById('deadline-time');
 
         let calendar;
 
@@ -83,6 +89,17 @@
 
         listViewBtn.addEventListener('click', showListView);
         calendarViewBtn.addEventListener('click', showCalendarView);
+
+        function toggleTimeInput() {
+            const showTime = !allDayCheckbox.checked;
+            deadlineTimeInput.style.display = showTime ? 'inline-block' : 'none';
+            if (!showTime) {
+                deadlineTimeInput.value = '';
+            }
+        }
+
+        allDayCheckbox.addEventListener('change', toggleTimeInput);
+        toggleTimeInput();
     });
 </script>
 

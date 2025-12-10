@@ -48,5 +48,13 @@ func main() {
 		auth.GET("/delete/:id", handlers.DeleteTask)
 	}
 
+	profile := r.Group("/")
+	profile.Use(handlers.AuthMiddleware())
+	{
+		profile.GET("/profile", handlers.ProfilePage)
+		profile.POST("/profile", handlers.ProfilePage)
+		profile.POST("/profile/upload", handlers.UploadAvatar) // 上传头像
+	}
+
 	r.Run(":8080")
 }

@@ -16,6 +16,7 @@ import (
 type CalendarEvent struct {
 	Title  string `json:"title"`
 	Start  string `json:"start"`
+	End    string `json:"end,omitempty"`
 	AllDay bool   `json:"allDay"`
 }
 
@@ -32,7 +33,10 @@ func TasksPage(c *gin.Context) {
 	database.DB.Where("user_id = ?", userID).Find(&tasks)
 
 	c.Writer.WriteHeader(http.StatusOK)
-	tmpl.ExecuteTemplate(c.Writer, "base", gin.H{"Tasks": tasks})
+	tmpl.ExecuteTemplate(c.Writer, "base", gin.H{
+		"Tasks":      tasks,
+		"IsLoggedIn": true,
+	})
 }
 
 func GetTasksJSON(c *gin.Context) {
@@ -45,10 +49,27 @@ func GetTasksJSON(c *gin.Context) {
 	events := make([]CalendarEvent, 0)
 	for _, task := range tasks {
 		if task.Deadline != nil {
+			start := task.Deadline
+			end := task.Deadline
+			if !task.AllDay {
+				// 默认持续 1 小时，便于在 timeGrid 中占位
+				oneHour := task.Deadline.Add(time.Hour)
+				end = &oneHour
+			}
+			startStr := start.Format(time.RFC3339)
+			endStr := ""
+			if end != nil {
+				endStr = end.Format(time.RFC3339)
+			}
+			if task.AllDay {
+				startStr = task.Deadline.Format("2006-01-02")
+				endStr = ""
+			}
 			events = append(events, CalendarEvent{
 				Title:  task.Title,
-				Start:  task.Deadline.Format("2006-01-02"),
-				AllDay: true,
+				Start:  startStr,
+				End:    endStr,
+				AllDay: task.AllDay,
 			})
 		}
 	}
@@ -75,7 +96,9 @@ func CreateTask(c *gin.Context) {
 	}
 
 	title := c.PostForm("title")
-	deadlineStr := c.PostForm("deadline")
+	deadlineDate := c.PostForm("deadline_date")
+	deadlineTime := c.PostForm("deadline_time")
+	allDay := c.PostForm("all_day") != ""
 
 	if title == "" {
 		// 如果标题为空，重新查询当前用户的任务并在页面中显示错误
@@ -87,14 +110,22 @@ func CreateTask(c *gin.Context) {
 	}
 
 	var deadline *time.Time
-	if deadlineStr != "" {
-		parsedTime, err := time.Parse("2006-01-02", deadlineStr)
-		if err == nil {
-			deadline = &parsedTime
+	if deadlineDate != "" {
+		layout := "2006-01-02"
+		if !allDay && deadlineTime != "" {
+			layout = "2006-01-02 15:04"
+			combined := deadlineDate + " " + deadlineTime
+			if parsedTime, err := time.Parse(layout, combined); err == nil {
+				deadline = &parsedTime
+			}
+		} else {
+			if parsedDate, err := time.Parse(layout, deadlineDate); err == nil {
+				deadline = &parsedDate
+			}
 		}
 	}
 
-	task := models.Task{Title: title, UserID: uint(userID), Deadline: deadline}
+	task := models.Task{Title: title, UserID: uint(userID), Deadline: deadline, AllDay: allDay}
 	if err := database.DB.Create(&task).Error; err != nil {
 		var tasks []models.Task
 		database.DB.Where("user_id = ?", userID).Find(&tasks)

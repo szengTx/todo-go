@@ -1,0 +1,102 @@
+{{define "title"}}个人主页 - 任务管理系统{{end}}
+{{define "content"}}
+<h2>个人主页</h2>
+
+{{if .error}}
+<div class="alert">{{.error}}</div>
+{{end}}
+{{if .success}}
+<div class="alert success">{{.success}}</div>
+{{end}}
+
+<div class="profile-card">
+    <div class="profile-avatar">
+        {{if .User.AvatarURL}}
+        <img src="{{.User.AvatarURL}}" alt="avatar">
+        {{else}}
+        <div class="avatar-placeholder">😊</div>
+        {{end}}
+    </div>
+    <div class="profile-info">
+        <div class="pill">用户名: {{.User.Username}}</div>
+        {{if .User.Email}}
+        <div class="pill">邮箱: {{.User.Email}}</div>
+        {{end}}
+    </div>
+</div>
+<div class="upload-row" id="avatar-drop">
+    <input type="file" id="avatar-file" accept="image/png, image/jpeg" hidden>
+    <p>拖拽图片到此处或 <button type="button" id="pick-btn">选择文件</button></p>
+    <small>支持 png / jpg，最大约 5MB（浏览器限制）。</small>
+</div>
+
+<form action="/profile" method="post" class="profile-form">
+    <div class="form-row">
+        <label>显示名称</label>
+        <input type="text" name="display_name" value="{{.User.DisplayName}}" placeholder="你的昵称" />
+    </div>
+    <div class="form-row">
+        <label>邮箱</label>
+        <input type="email" name="email" value="{{.User.Email}}" placeholder="name@example.com" />
+    </div>
+    <div class="form-row">
+        <label>头像 URL（可选）</label>
+        <input type="url" name="avatar_url" value="{{.User.AvatarURL}}" placeholder="https://example.com/avatar.png" />
+    </div>
+    <button type="submit">保存信息</button>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const drop = document.getElementById('avatar-drop');
+    const fileInput = document.getElementById('avatar-file');
+    const pickBtn = document.getElementById('pick-btn');
+    const avatarImg = document.querySelector('.profile-avatar img');
+    const placeholder = document.querySelector('.avatar-placeholder');
+
+    function setPreview(url) {
+        if (avatarImg) {
+            avatarImg.src = url;
+            avatarImg.style.display = 'block';
+        }
+        if (placeholder) placeholder.style.display = 'none';
+    }
+
+    function upload(file) {
+        const form = new FormData();
+        form.append('avatar', file);
+        fetch('/profile/upload', {
+            method: 'POST',
+            body: form
+        }).then(r => r.json()).then(res => {
+            if (res.url) {
+                setPreview(res.url);
+            } else if (res.error) {
+                alert(res.error);
+            }
+        }).catch(() => alert('上传失败'));
+    }
+
+    ['dragover','dragenter'].forEach(evt => drop.addEventListener(evt, e => {
+        e.preventDefault();
+        drop.classList.add('drag');
+    }));
+    ['dragleave','drop'].forEach(evt => drop.addEventListener(evt, e => {
+        e.preventDefault();
+        drop.classList.remove('drag');
+    }));
+    drop.addEventListener('drop', e => {
+        const file = e.dataTransfer.files[0];
+        if (file) upload(file);
+    });
+
+    pickBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (file) upload(file);
+    });
+});
+</script>
+{{end}}
+
+{{define "profile.html"}}{{template "base" .}}{{end}}
