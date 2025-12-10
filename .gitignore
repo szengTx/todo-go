@@ -1,0 +1,3 @@
+// Ignore database file and uploaded avatars
+todo.db
+static/uploads/

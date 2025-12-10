@@ -51,15 +51,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const drop = document.getElementById('avatar-drop');
     const fileInput = document.getElementById('avatar-file');
     const pickBtn = document.getElementById('pick-btn');
-    const avatarImg = document.querySelector('.profile-avatar img');
+    let avatarImg = document.querySelector('.profile-avatar img');
     const placeholder = document.querySelector('.avatar-placeholder');
+    const avatarUrlInput = document.querySelector('input[name="avatar_url"]');
 
-    function setPreview(url) {
-        if (avatarImg) {
-            avatarImg.src = url;
-            avatarImg.style.display = 'block';
+    function ensureImg() {
+        if (!avatarImg) {
+            avatarImg = document.createElement('img');
+            const container = document.querySelector('.profile-avatar');
+            container.appendChild(avatarImg);
         }
         if (placeholder) placeholder.style.display = 'none';
+        avatarImg.style.display = 'block';
+        return avatarImg;
+    }
+
+    function setPreview(url) {
+        const img = ensureImg();
+        img.src = url;
+        if (avatarUrlInput) {
+            avatarUrlInput.value = url;
+        }
     }
 
     function upload(file) {

@@ -31,15 +31,7 @@
         </main>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-    <script>
-        // 页面进入时的淡入动画
-        window.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.fade-in').forEach((el, idx) => {
-                el.style.transitionDelay = `${idx * 60}ms`;
-                requestAnimationFrame(() => el.classList.add('enter'));
-            });
-        });
-    </script>
+    <script defer src="/static/js/app.js"></script>
 </body>
 </html>
 {{end}}
